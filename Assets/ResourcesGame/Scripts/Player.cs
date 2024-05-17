@@ -1,36 +1,36 @@
 using Unity.Netcode;
 using UnityEngine;
 
-public class Player : MonoBehaviour
+public class Player : NetworkBehaviour
 {
     [SerializeField] private float speed;
 
-    private NetworkManager netManager;
     private Rigidbody2D rb;
 
     void Start()
     {
-        rb = GetComponent<Rigidbody2D>();
-        netManager = NetworkManager.Singleton;
+        if (IsOwner)
+            rb = GetComponent<Rigidbody2D>();
+        else
+            this.enabled = false;
     }
 
     void FixedUpdate()
     {
-        if (netManager.IsClient && netManager.LocalClient != null)
-            PlayerMovement();
+        PlayerMovement();
     }
 
     private void PlayerMovement()
     {
-        if (!netManager.ConnectedClients.TryGetValue(netManager.LocalClientId, out NetworkClient client))
-            return;
+        if (IsOwner)
+        {
+            float moveHorizontal = Input.GetAxis("Horizontal");
+            float moveVertical = Input.GetAxis("Vertical");
 
-        float moveHorizontal = Input.GetAxis("Horizontal");
-        float moveVertical = Input.GetAxis("Vertical");
+            Vector2 movement = new Vector2(moveHorizontal, moveVertical);
+            movement = movement.normalized;
 
-        Vector2 movement = new Vector2(moveHorizontal, moveVertical);
-        movement = movement.normalized;
-
-        rb.velocity = movement * speed;
+            rb.velocity = movement * speed;
+        }
     }
 }
